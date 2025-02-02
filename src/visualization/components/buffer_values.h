@@ -45,10 +45,17 @@ class BufferValues final : public Component
     [[nodiscard]] int render_index() const override;
 
     void draw(const mat4& projection, const mat4& view_inv) override;
+    void shift_precision_left();
+    void shift_precision_right();
+    int get_float_precision() const;
 
   private:
-    float text_pixel_scale         = 1.0f;
     static float constexpr padding = 0.125f; // Must be smaller than 0.5
+    static int constexpr max_float_precision = 10;
+    static int constexpr min_float_precision = 3;
+    static float constexpr default_text_scale = 1.0f;
+    int float_precision                       = min_float_precision;
+    float text_pixel_scale                    = default_text_scale;
 
     void generate_glyphs_texture();
 

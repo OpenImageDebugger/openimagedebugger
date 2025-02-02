@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
-
+#include <iostream>
 
 #include "ui/gl_text_renderer.h"
 
@@ -63,15 +63,13 @@ inline void pix2str(const BufferType& type,
                     const int& pos,
                     const int& channel,
                     const int label_length,
+                    const int float_precision,
                     char* pix_label)
 {
     if (type == BufferType::Float32 || type == BufferType::Float64) {
         const float fpix =
             reinterpret_cast<const float*>(buffer)[pos + channel];
-        snprintf(pix_label, label_length, "%.3f", fpix);
-        if (string{pix_label}.length() > 7) {
-            snprintf(pix_label, label_length, "%.3e", fpix);
-        }
+        snprintf(pix_label, label_length, "%.*f", float_precision, fpix);
     } else if (type == BufferType::UnsignedByte) {
         snprintf(pix_label, label_length, "%d", buffer[pos + channel]);
     } else if (type == BufferType::Short) {
@@ -171,7 +169,13 @@ void BufferValues::draw(const mat4& projection, const mat4& view_inv)
                     const float y_off = (0.5f * (channels - 1) - c) / channels -
                                         recenter_factors[c];
 
-                    pix2str(type, buffer, pos, c, label_length, pix_label);
+                    pix2str(type,
+                            buffer,
+                            pos,
+                            c,
+                            label_length,
+                            float_precision,
+                            pix_label);
                     draw_text(projection,
                               view_inv,
                               buffer_pose,
@@ -328,6 +332,29 @@ void BufferValues::draw_text(const mat4& projection,
         x += char_step_direction.x();
         y += char_step_direction.y();
     }
+}
+
+void BufferValues::shift_precision_left()
+{
+    if (min_float_precision < float_precision) {
+        float_precision--;
+        // reset text scaling
+        text_pixel_scale = default_text_scale;
+    }
+}
+
+void BufferValues::shift_precision_right()
+{
+    if (max_float_precision > float_precision) {
+        float_precision++;
+        // reset text scaling
+        text_pixel_scale = default_text_scale;
+    }
+}
+
+int BufferValues::get_float_precision() const
+{
+    return float_precision;
 }
 
 } // namespace oid
